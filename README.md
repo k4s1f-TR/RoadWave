@@ -47,7 +47,7 @@ Roadwave is a local-first web application that runs on your computer. It convert
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/roadwave.git
+   git clone https://github.com/k4s1f-TR/RoadWave.git
    cd roadwave
    ```
 
