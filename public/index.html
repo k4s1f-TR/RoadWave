@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101412"><title>Roadwave — Müziğin yola hazır</title>
+  <meta name="theme-color" content="#101412"><title>Roadwave — Medya Dönüştürücü & YouTube İndirici</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/youtube.css">
   <script src="/app.js" defer></script><script src="/youtube.js" defer></script>
@@ -12,7 +12,7 @@
   <symbol id="i-wave" viewBox="0 0 24 24"><path d="M4 9v6m5-11v16m6-13v10m5-8v6"/></symbol>
   <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
   <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v9H3z"/></symbol>
-  <symbol id="i-car" viewBox="0 0 24 24"><path d="m4 10 2-6h12l2 6M3 10h18v8H3zM6 18v2m12-2v2M6 13h2m8 0h2"/></symbol>
+
   <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/></symbol>
   <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
@@ -24,7 +24,7 @@
   <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8z"/></symbol>
   <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
   <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 8a9 9 0 1 0 1 8M20 3v6h-6"/></symbol>
-  <symbol id="i-usb" viewBox="0 0 24 24"><path d="M12 21V3m-3 3 3-3 3 3M12 17l-6-4V9m6 5 6-4V7"/><circle cx="6" cy="7" r="2"/><path d="M16 3h4v4h-4z"/></symbol>
+
 </defs></svg>
 <div class="app-shell">
   <aside class="sidebar">
@@ -34,7 +34,7 @@
       <button class="nav-item selected" id="nav-convert"><svg><use href="#i-grid"/></svg>Dönüştürücü<span class="nav-active-dot"></span></button>
       <button class="nav-item" id="nav-youtube" title="YouTube indirici"><svg><use href="#i-play"/></svg>YouTube<span class="new-badge">YENİ</span></button>
       <button class="nav-item" id="nav-output"><svg><use href="#i-folder"/></svg>Çıktı klasörü<svg class="small-arrow"><use href="#i-arrow"/></svg></button>
-      <button class="nav-item" id="nav-guide"><svg><use href="#i-usb"/></svg>USB rehberi</button>
+
     </nav>
     <div class="sidebar-bottom">
       <div class="private-card"><svg><use href="#i-shield"/></svg><strong>Dosyaların seninle kalır.</strong><p>Dönüşümler yereldir.<br>YouTube için internet gerekir.</p><span><i></i> Uygulamada günlük kota yok</span></div>
@@ -46,8 +46,8 @@
     <header class="topbar"><div>Çalışma alanı <span>/</span> <strong>Dönüştürücü</strong></div><span class="connection" id="connection"><i></i> Bağlanıyor</span></header>
     <main>
       <section class="intro">
-        <div><div class="eyebrow"><span></span> MÜZİĞİN, SINIRSIZ.</div><h1>Bir sonraki yolculuğun<br>buradan başlasın<span>.</span></h1><p>Favori parçalarını ekle. MP3’e dönüştür. Yola çık.</p></div>
-        <div class="sound-art" aria-hidden="true"><div class="sound-ring"></div><div class="sound-bars"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div><span>MADE FOR THE ROAD</span></div>
+        <div><div class="eyebrow"><span></span> MÜZİĞİN, SINIRSIZ.</div><h1>Dönüştür, indir<br>ve dinle<span>.</span></h1><p>Favori parçalarını ekle. MP3'e dönüştür. Hemen dinlemeye başla.</p></div>
+        <div class="sound-art" aria-hidden="true"><div class="sound-ring"></div><div class="sound-bars"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div><span>CONVERT & DOWNLOAD</span></div>
       </section>
       <div id="engine-warning" class="banner hidden" role="alert">Dönüştürme motoru bulunamadı. Baslat.cmd dosyasını çalıştırarak kurulumu tamamlayın.</div>
       <div class="main-grid" id="converter-panel">
@@ -63,7 +63,7 @@
             <div class="queue-heading"><div><h2>Dönüştürme kuyruğu <span id="queue-count">0</span></h2><p id="queue-summary">Biraz müzik ekleyerek başlayalım.</p></div><button id="add-files" class="icon-button" title="Dosya ekle" aria-label="Dosya ekle"><svg><use href="#i-plus"/></svg></button></div>
             <div class="queue-toolbar"><div class="tabs" role="group" aria-label="Kuyruk filtresi"><button class="active" data-filter="all">Tümü</button><button data-filter="done">Tamamlanan <span id="done-count">0</span></button></div><button id="clear-done" class="text-button" disabled>Listeyi temizle</button></div>
             <div id="job-list" class="job-list"></div>
-            <div id="empty-state" class="empty-state"><div class="empty-icon"><svg><use href="#i-music"/></svg></div><strong>Güzel bir yolculuk, iyi müzikle başlar.</strong><p>Eklediğin parçalar ve dönüşüm durumları burada görünecek.</p><span>Dosya sayısı sınırı yok <b>·</b> Orijinaller korunur</span></div>
+            <div id="empty-state" class="empty-state"><div class="empty-icon"><svg><use href="#i-music"/></svg></div><strong>Müzik ekleyerek başla.</strong><p>Eklediğin parçalar ve dönüşüm durumları burada görünecek.</p><span>Dosya sayısı sınırı yok <b>·</b> Orijinaller korunur</span></div>
             <div class="queue-footer"><span><i class="dot"></i> <span id="queue-footer-text">Dönüştürmeye hazır</span></span><button id="cancel-all" class="text-button hidden">İşlemleri durdur</button><span id="total-size">0 MB</span></div>
           </section>
           <div class="trust-row"><span><svg><use href="#i-shield"/></svg>Gizli ve yerel</span><span><svg><use href="#i-wave"/></svg>Gerçek FFmpeg motoru</span><span><svg><use href="#i-check"/></svg>Günlük kota yok</span></div>
@@ -71,8 +71,8 @@
         <aside class="settings-column" aria-label="Dönüştürme ayarları">
           <section class="settings-panel">
             <div class="panel-title"><h2>Dönüştürme ayarları</h2><svg><use href="#i-wave"/></svg></div>
-            <div class="car-profile"><div class="car-icon"><svg><use href="#i-car"/></svg></div><div><span>ARAÇ PROFİLİ</span><strong>Nissan Qashqai</strong><p>2017 · J11 · Black Edition</p></div><span class="profile-check"><svg><use href="#i-check"/></svg></span></div>
-            <div class="setting-group"><label>Çıktı formatı</label><div class="format-choice"><span class="mp3-icon"><svg><use href="#i-music"/></svg></span><div><strong>MP3</strong><span>Evrensel ses formatı</span></div><span class="badge">ARAÇ İÇİN</span></div></div>
+            <div class="car-profile"><div class="car-icon"><svg><use href="#i-music"/></svg></div><div><span>ÇIKTI PROFİLİ</span><strong>MP3 Standart</strong><p>44,1 kHz · Stereo · ID3v2.3</p></div><span class="profile-check"><svg><use href="#i-check"/></svg></span></div>
+            <div class="setting-group"><label>Çıktı formatı</label><div class="format-choice"><span class="mp3-icon"><svg><use href="#i-music"/></svg></span><div><strong>MP3</strong><span>Evrensel ses formatı</span></div><span class="badge">EVRENSEL</span></div></div>
             <div class="setting-group"><div class="label-row"><label for="bitrate">Ses kalitesi</label><span id="quality-label">Dengeli</span></div><div class="quality-options" id="bitrate" role="group" aria-label="Ses kalitesi"><button data-bitrate="128">128</button><button data-bitrate="192" class="active">192</button><button data-bitrate="256">256</button><button data-bitrate="320">320</button></div><div class="quality-caption"><span>kbps · sabit bit hızı</span><span>44,1 kHz · stereo</span></div></div>
             <div class="setting-separator"></div>
             <label class="toggle-row"><span><strong>Albüm kapağını koru</strong><small>Dosyada varsa MP3’e ekle</small></span><input id="cover-toggle" type="checkbox" checked><span class="switch"></span></label>
@@ -82,7 +82,6 @@
             <button id="start-button" class="primary-button" disabled><svg><use href="#i-wave"/></svg><span>MP3’e dönüştür</span><svg><use href="#i-arrow"/></svg></button>
             <p id="start-hint" class="start-hint">Başlamak için ses dosyası ekle</p>
           </section>
-          <button class="usb-card" id="usb-tip"><div class="usb-icon"><svg><use href="#i-usb"/></svg></div><div><strong>USB’ye hazır. Yola hazır.</strong><p>Qashqai için küçük ipuçları</p></div><svg><use href="#i-arrow"/></svg></button>
         </aside>
       </div>
       <section id="youtube-panel" class="hidden" aria-label="YouTube indirici">
@@ -100,21 +99,20 @@
           </div>
           <aside>
             <section class="settings-panel yt-settings"><div class="panel-title"><h2>İndirme ayarları</h2><svg><use href="#i-download"/></svg></div><label class="yt-field-label">Kaydetme biçimi</label><div class="yt-format-options" role="group" aria-label="İndirme biçimi"><button class="active" data-yt-format="mp3"><svg><use href="#i-music"/></svg><strong>MP3</strong><span>Yalnızca ses</span></button><button data-yt-format="mp4"><svg><use href="#i-play"/></svg><strong>MP4</strong><span>Video + ses</span></button></div>
-              <div id="yt-audio-options"><div class="setting-group"><label class="yt-field-label" for="yt-bitrate">Ses kalitesi</label><select id="yt-bitrate"><option value="128">128 kbps · Kompakt</option><option value="192" selected>192 kbps · Qashqai profili</option><option value="256">256 kbps · Yüksek</option><option value="320">320 kbps · En yüksek bit hızı</option></select></div><p class="yt-setting-help">44,1 kHz · Stereo · ID3v2.3</p><label class="toggle-row"><span><strong>Video görselini kapak yap</strong><small>Varsa, MP3’e gömülü olarak ekle</small></span><input id="yt-cover" type="checkbox" checked><span class="switch"></span></label></div>
+              <div id="yt-audio-options"><div class="setting-group"><label class="yt-field-label" for="yt-bitrate">Ses kalitesi</label><select id="yt-bitrate"><option value="128">128 kbps · Kompakt</option><option value="192" selected>192 kbps · Önerilen</option><option value="256">256 kbps · Yüksek</option><option value="320">320 kbps · En yüksek bit hızı</option></select></div><p class="yt-setting-help">44,1 kHz · Stereo · ID3v2.3</p><label class="toggle-row"><span><strong>Video görselini kapak yap</strong><small>Varsa, MP3’e gömülü olarak ekle</small></span><input id="yt-cover" type="checkbox" checked><span class="switch"></span></label></div>
               <div id="yt-video-options" class="hidden"><div class="setting-group"><label class="yt-field-label" for="yt-resolution">En yüksek çözünürlük</label><select id="yt-resolution"><option value="360">360p · Küçük dosya</option><option value="480">480p · Standart</option><option value="720">720p · HD</option><option value="1080" selected>1080p · Full HD</option><option value="1440">1440p · 2K</option><option value="2160">2160p · 4K</option></select></div><p class="yt-setting-help">Kaynakta bulunan, seçimine kadar en iyi kalite. H.264 + AAC; gerektiğinde dönüştürülür.</p></div>
               <div class="setting-separator"></div><label class="toggle-row"><span><strong>Sade dosya adları</strong><small>Türkçe harfleri Latin harflere çevir</small></span><input id="yt-ascii" type="checkbox"><span class="switch"></span></label>
               <div class="setting-group"><div class="label-row"><label>Kaydedilecek ana klasör</label><button id="yt-choose-folder" class="text-link">Değiştir</button></div><button id="yt-output-folder" class="output-path"><svg><use href="#i-folder"/></svg><span id="yt-output-path">outputs</span><svg><use href="#i-arrow"/></svg></button><p class="yt-setting-help">Dosyalar YouTube alt klasörüne kaydedilir. Listeler kendi klasöründe, sıralı adlarla tutulur.</p></div>
               <div class="yt-engine"><div><strong>İndirme motoru</strong><span id="yt-engine-status">Kontrol ediliyor…</span></div><button id="yt-update" class="icon-button" aria-label="YouTube motorunu kur veya güncelle" title="Motoru kur / güncelle"><svg><use href="#i-refresh"/></svg></button></div><p class="yt-setting-help">YouTube değiştiğinde motoru bu düğmeden güncelleyebilirsin.</p>
-            </section><div class="yt-note"><svg><use href="#i-info"/></svg><p>YouTube erişim ve hız sınırlamaları uygulayabilir. MP4, video içindir; Qashqai’de USB’den müzik için MP3 seç.</p></div>
+            </section><div class="yt-note"><svg><use href="#i-info"/></svg><p>YouTube erişim ve hız sınırlamaları uygulayabilir. MP4 video içerir, yalnızca ses için MP3 seçeneğini kullanın.</p></div>
           </aside>
         </div>
       </section>
-      <footer class="page-footer"><span>Senin müziğin. Senin kontrolün.</span><span>Özenle dönüştür, özgürce dinle.</span></footer>
+      <footer class="page-footer"><span>Senin müziğin. Senin kontrolün.</span><span>Dönüştür, indir, dinle.</span></footer>
     </main>
   </div>
 </div>
 <div id="toast-stack" class="toast-stack" role="status" aria-live="polite"></div>
-<dialog id="guide-dialog"><div class="dialog-heading"><span class="eyebrow">YOLA ÇIKMADAN ÖNCE</span><button class="icon-button" data-close="guide-dialog" aria-label="Kapat"><svg><use href="#i-close"/></svg></button></div><h2>Qashqai için USB rehberi</h2><p class="dialog-lead">MP3 dosyaların hazır. Şimdi birkaç küçük kontrol.</p><div class="guide-step"><span>01</span><div><h3>MP3 profilini kullan</h3><p>192 kbps sabit bit hızı, 44,1 kHz ve stereo varsayılandır. Şarkı bilgileri ID3v2.3 ve ek ID3v1 etiketleriyle yazılır.</p></div></div><div class="guide-step"><span>02</span><div><h3>USB belleğin uyumunu kontrol et</h3><p>J11 kılavuzu FAT16 / FAT32 dosya sistemlerini listeler. Kapasite ve dosya sayısı sınırları ses ünitesine göre değişir. Başlangıçta birkaç şarkıyı tek klasöre kopyalayıp dene.</p></div></div><div class="guide-step"><span>03</span><div><h3>Kapağın olsun, beklentin net olsun</h3><p>Kaynakta varsa kapak en fazla 600 × 600 piksel JPEG olarak eklenir. Araç ekranında kapak gösterimi ünitenin desteğine bağlıdır. Sorun yaşarsan kapak seçeneğini kapatarak tekrar dönüştürebilirsin.</p></div></div><div class="guide-note"><svg><use href="#i-info"/></svg><p>Uygulama USB belleğini biçimlendirmez. Biçimlendirme bellekteki dosyaları silebilir. Ses ünitenin kendi kılavuzunu esas al.</p></div><a class="source-link" href="https://www.nissan-cdn.net/content/dam/Nissan/pe/manuals-and-guides/qashqai/2019/Nissan_Qashqai_MY2019.pdf" target="_blank" rel="noreferrer">Nissan J11 kılavuzu · Ağustos 2017 baskısı ↗</a><small class="source-note">İspanyolca kılavuz, ses sistemi tabloları: basılı sayfalar 4-58 ve 4-67/68. Donanım ve bölge farklılıkları olabilir.</small></dialog>
 <dialog id="player-dialog"><div class="dialog-heading"><span class="eyebrow">DÖNÜŞTÜRÜLEN DOSYA</span><button class="icon-button" data-close="player-dialog" aria-label="Kapat"><svg><use href="#i-close"/></svg></button></div><h2 id="player-title">Ön dinleme</h2><p>Kaydedilen MP3 dosyasını dinliyorsun.</p><audio id="audio-player" controls preload="metadata"></audio></dialog>
 <dialog id="yt-player-dialog"><div class="dialog-heading"><span class="eyebrow">KÜTÜPHANENDEN</span><button class="icon-button" id="yt-player-close" aria-label="Önizlemeyi kapat"><svg><use href="#i-close"/></svg></button></div><h2 id="yt-player-title">Önizleme</h2><video id="yt-video-player" controls playsinline preload="metadata"></video><audio id="yt-audio-player" controls preload="metadata"></audio></dialog>
 </body>

@@ -41,11 +41,11 @@ function render() {
   $('#clear-done').disabled = !done;
   const running = jobs.filter(j => ['queued', 'converting'].includes(j.status)).length;
   $('#cancel-all').classList.toggle('hidden', !running);
-  $('#queue-footer-text').textContent = running ? `${running} dosya işleniyor · ${state.active} aktif` : done ? `${done} MP3 yola hazır` : 'Dönüştürmeye hazır';
+  $('#queue-footer-text').textContent = running ? `${running} dosya işleniyor · ${state.active} aktif` : done ? `${done} MP3 hazır` : 'Dönüştürmeye hazır';
   $('#engine-warning').classList.toggle('hidden', state.engineReady);
   const visible = filter === 'done' ? jobs.filter(j => j.status === 'done') : jobs;
   $('#empty-state').classList.toggle('hidden', visible.length > 0);
-  $('#empty-state strong').textContent = filter === 'done' ? 'Tamamlanan parçalar burada görünecek.' : 'Güzel bir yolculuk, iyi müzikle başlar.';
+  $('#empty-state strong').textContent = filter === 'done' ? 'Tamamlanan parçalar burada görünecek.' : 'Müzik ekleyerek başla.';
   const rows = visible.map(job => {
     const meta = [size(job.size), duration(job.duration), job.hasCover ? 'Kapak var' : 'Kapak yok'];
     const status = { ready: 'Dönüştürmeye hazır', queued: 'Sırada bekliyor', converting: `Dönüştürülüyor · %${job.progress}`, done: `MP3 hazır · ${job.bitrate} kbps · ${size(job.outputSize || 0)}`, error: job.error, canceled: 'Durduruldu' }[job.status];
@@ -151,7 +151,8 @@ $('#shutdown-button').onclick = safeAction(async () => {
 });
 $('#clear-done').onclick = safeAction(async () => { await api('remove', { completed: true }); toast('Tamamlananlar listeden kaldırıldı. MP3 dosyaların korunuyor.'); });
 for (const selector of ['#nav-output', '#output-path-button']) $(selector).onclick = safeAction(() => api('open-folder'));
-for (const selector of ['#nav-guide', '#usb-tip']) $(selector).onclick = () => $('#guide-dialog').showModal();
+
+
 $('#nav-convert').onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 document.querySelectorAll('[data-close]').forEach(el => el.onclick = () => document.getElementById(el.dataset.close).close());
 document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', e => { if (e.target === dialog) { const rect = dialog.getBoundingClientRect(); if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) dialog.close(); } }));

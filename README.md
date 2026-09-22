@@ -1,6 +1,6 @@
 # 🎵 Roadwave
 
-**Your music, road-ready.** A local music converter and YouTube downloader built for car USB playback.
+**Your media, anywhere.** A fast, local-first audio converter and YouTube MP3/MP4 downloader.
 
 [Türkçe README →](README.tr.md)
 
@@ -12,7 +12,7 @@
 
 ## What is Roadwave?
 
-Roadwave is a local-first web application that runs on your computer. It converts audio files to MP3 and downloads YouTube content — optimized for car audio systems (Nissan Qashqai J11 profile included).
+Roadwave is a local-first web application that runs entirely on your machine. It converts audio files to universally compatible MP3 and downloads YouTube content in high quality.
 
 **No cloud uploads. No daily quotas. No accounts.**
 

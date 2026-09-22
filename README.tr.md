@@ -1,6 +1,6 @@
 # 🎵 Roadwave
 
-**Müziğin yola hazır.** Windows üzerinde çalışan, Türkçe arayüzlü müzik dönüştürücü ve YouTube indirici.
+**Müziğin ve videoların her an yanında.** Windows üzerinde çalışan, Türkçe arayüzlü yerel medya dönüştürücü ve YouTube indirici.
 
 [English README →](README.md)
 
@@ -18,7 +18,7 @@ Gereksinimler: Windows 10/11, Node.js 22 veya daha yeni sürümü. Motorlar proj
 2. İsterseniz kaliteyi ve **Kaydedilecek klasör → Değiştir** seçeneğini ayarlayın. Varsayılan klasör proje içindeki `outputs` klasörüdür.
 3. **MP3'e dönüştür** düğmesine basın. Tamamlanan dosyalar otomatik olarak seçili klasöre kaydedilir; ayrıca indirme yapmanız gerekmez.
 4. Tamamlanan parçaları ön dinleyebilir, tek tek indirebilir veya çıktı klasörünü açabilirsiniz.
-5. MP3'leri USB belleğe kopyalayın ve araçta birkaç parçayla deneyin.
+5. Tamamlanan MP3 dosyalarını dilediğiniz cihaz veya medya oynatıcıda dinleyin.
 
 ## YouTube indirme
 
@@ -29,7 +29,7 @@ Gereksinimler: Windows 10/11, Node.js 22 veya daha yeni sürümü. Motorlar proj
 5. **Seçilenleri indir** düğmesine basın. Aynı anda en fazla iki indirme işlenir. İlerleme, hız, kalan süre ve ses/video hazırlama aşaması gösterilir.
 6. Dosyalar seçili ana klasörün **YouTube** alt klasörüne kaydedilir. Oynatma listeleri kendi klasöründe, `001 - Başlık [video-id].mp3` gibi sıralı adlarla tutulur. Ana klasör seçimi yerel dönüştürücüyle ortaktır.
 
-MP3, Qashqai profilindeki 44,1 kHz/stereo/ID3v2.3 ayarlarını kullanır. Video görseli mevcutsa ve kapak seçeneği açıksa en fazla 600×600 JPEG olarak gömülür. MP4 H.264/AAC ve `faststart` ile hazırlanır; uyumlu akışlar yeniden kodlanmadan kopyalanır, diğer codec'ler dönüştürülür. MP4 seçeneği aracın video oynatma desteği olduğu anlamına gelmez; araçta USB müzik için MP3 kullanın.
+MP3, evrensel uyumlu 44,1 kHz/stereo/ID3v2.3 ayarlarını kullanır. Video görseli mevcutsa ve kapak seçeneği açıksa en fazla 600×600 JPEG olarak gömülür. MP4 H.264/AAC ve `faststart` ile hazırlanır; uyumlu akışlar yeniden kodlanmadan kopyalanır, diğer codec'ler dönüştürülür.
 
 Kuyruk ve sonuçlar yeniden açılışta korunur. Kesilen indirmeler **Yeniden dene** ile başlatılır; yt-dlp desteklediği durumda `.part` dosyasından devam eder. Hatalı bir video kalan kuyruğu durdurmaz. Aynı video/ayar zaten kuyrukta veya diskteyse yeniden eklenmez; listeden kaldırdıktan sonra tekrar indirebilirsiniz. Çıktı dosyalarının üzerine yazılmaz.
 
@@ -39,17 +39,14 @@ Liste temizleme çıktı dosyalarını silmez. Tamamlanan indirmelerin geçici d
 
 Uygulamada günlük indirme kotası yoktur; YouTube erişimi/hızı sınırlayabilir. Özel, silinmiş, üyelik/oturum gerektiren veya canlı yayın durumundaki içerikler desteklenmez. Hesap, tarayıcı çerezleri ve DRM çözme akışı kullanılmaz.
 
-## Qashqai 2017 J11 profili
+## Ses ve çıktı standartları
 
 - MP3 / MPEG-1 Layer III, varsayılan 192 kbps CBR, 44,1 kHz, stereo.
-- İsteğe bağlı 128, 256 veya 320 kbps. Daha yüksek bit hızı kaynakta kaybolan ayrıntıları geri getirmez.
+- İsteğe bağlı 128, 256 veya 320 kbps.
 - Mevcut başlık, sanatçı ve albüm etiketleri korunur. ID3v2.3 ve ek ID3v1 etiketi yazılır; Unicode bilgiler ID3v2 etiketinde saklanır.
-- Kaynakta gömülü kapak varsa en fazla 600 × 600 JPEG olarak eklenir. Kapak bozuksa ses kapaksız işlenir ve uyarı gösterilir. Kapak görünümü aracın ses ünitesine bağlıdır.
+- Kaynakta gömülü kapak varsa en fazla 600 × 600 JPEG olarak eklenir. Kapak bozuksa ses kapaksız işlenir ve uyarı gösterilir.
 - Sade dosya adları seçeneği, Türkçe karakterleri Latin harflere çevirir; şarkı etiketlerini değiştirmez.
-
-Nissan'ın Ağustos 2017 baskısı J11 kılavuzu 44,1 kHz MP3, 192 kbps ve FAT16/FAT32 desteğini listeler. Ses ünitesine göre kapasite, dosya ve klasör limitleri değişir. Black Edition / X-Tronic tanımı takılı ses ünitesini tek başına kesinleştirmez; özellikle sonradan değiştirilmiş teyp farklı olabilir. Bu profil makul bir uyumluluk başlangıcıdır; fiziksel araçta doğrulama yapılmamıştır.
-
-Kaynak: [Nissan J11 kılavuzu, Ağustos 2017 baskısı](https://www.nissan-cdn.net/content/dam/Nissan/pe/manuals-and-guides/qashqai/2019/Nissan_Qashqai_MY2019.pdf), basılı sayfalar 4-58 ve 4-67/68; İspanyolca, farklı donanım tabloları.
+- MP4 indirmelerinde H.264 video ve AAC ses kodekleri kullanılır; hızlı başlatma ve yüksek cihaz uyumluluğu için `faststart` bayrağı uygulanır.
 
 ## Dosyalar ve performans
 
