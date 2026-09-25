@@ -7,16 +7,20 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { pipeline } from 'node:stream/promises';
-import { extensions, settingsFrom, conversionArgs, outputBase } from './lib/audio.mjs';
+import { extensions, settingsFrom, conversionArgs, outputBase, getFormatInfo } from './lib/audio.mjs';
 import { YouTubeManager } from './lib/youtube.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const DATA = path.resolve(process.env.ROADWAVE_DATA || path.join(ROOT, 'data'));
+const DATA = path.resolve(process.env.SOUNDWAVE_DATA || path.join(ROOT, 'data'));
 const INPUTS = path.join(DATA, 'inputs');
-const DEFAULT_OUTPUT = path.resolve(process.env.ROADWAVE_OUTPUT || path.join(ROOT, 'outputs'));
+const DEFAULT_OUTPUT = path.resolve(process.env.SOUNDWAVE_OUTPUT || path.join(ROOT, 'outputs'));
 const FFMPEG = process.env.FFMPEG_PATH || path.join(ROOT, 'tools/ffmpeg/ffmpeg.exe');
 const FFPROBE = process.env.FFPROBE_PATH || path.join(ROOT, 'tools/ffmpeg/ffprobe.exe');
 const PORT = Number(process.env.PORT || 47831);
+const configuredUploadLimit = Number(process.env.SOUNDWAVE_MAX_UPLOAD_BYTES || 4 * 1024 ** 3);
+const MAX_UPLOAD_BYTES = Number.isSafeInteger(configuredUploadLimit) && configuredUploadLimit > 0 ? configuredUploadLimit : 4 * 1024 ** 3;
+const configuredRequestTimeout = Number(process.env.SOUNDWAVE_REQUEST_TIMEOUT_MS || 30 * 60 * 1000);
+const REQUEST_TIMEOUT_MS = Number.isSafeInteger(configuredRequestTimeout) && configuredRequestTimeout >= 30000 ? configuredRequestTimeout : 30 * 60 * 1000;
 const TOKEN = randomBytes(32).toString('hex');
 const clients = new Set();
 const processes = new Map();
@@ -24,21 +28,24 @@ const active = new Set();
 let pickerBusy = false;
 let uploadsActive = 0;
 let stopping = false;
-let settings = { bitrate: 192, cover: true, ascii: false, outputDir: DEFAULT_OUTPUT, parallel: 2 };
+let settings = { quality: 192, cover: true, ascii: false, format: 'mp3', outputDir: DEFAULT_OUTPUT, parallel: 2 };
 let jobs = [];
 for (const dir of [DATA, INPUTS, DEFAULT_OUTPUT]) fs.mkdirSync(dir, { recursive: true });
 const stateFile = path.join(DATA, 'state.json');
 try {
   const state = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
-  settings = { ...settings, ...state.settings };
-  jobs = state.jobs || [];
+  const saved = state.settings && typeof state.settings === 'object' ? state.settings : {};
+  const parallel = [1, 2, 4].includes(Number(saved.parallel)) ? Number(saved.parallel) : settings.parallel;
+  const outputDir = typeof saved.outputDir === 'string' && path.isAbsolute(saved.outputDir) ? path.resolve(saved.outputDir) : settings.outputDir;
+  settings = { ...settings, ...settingsFrom(saved, { migrateLegacy: true }), parallel, outputDir };
+  jobs = Array.isArray(state.jobs) ? state.jobs.filter(job => job && typeof job === 'object' && /^[a-f0-9-]{36}$/.test(job.id || '')) : [];
   for (const job of jobs) {
     if (['converting', 'queued', 'analyzing'].includes(job.status)) {
-      job.status = 'error'; job.error = 'Önceki oturum kesildi. Yeniden deneyebilirsiniz.';
+      job.status = 'error'; job.error = 'Previous session was interrupted. You can try again.';
     }
   }
 } catch (error) {
-  if (error.code !== 'ENOENT') console.warn('Oturum kaydı okunamadı; yeni oturum açıldı.');
+  if (error.code !== 'ENOENT') console.warn('Could not read session state; started a new session.');
 }
 
 const youtube = new YouTubeManager({ root: ROOT, data: DATA, ffmpeg: FFMPEG, ffprobe: FFPROBE, onChange: () => broadcast(false) });
@@ -47,14 +54,14 @@ function persist() {
   try {
     fs.writeFileSync(`${stateFile}.tmp`, JSON.stringify({ settings, jobs }));
     fs.renameSync(`${stateFile}.tmp`, stateFile);
-  } catch (error) { console.error('Oturum kaydedilemedi:', error.message); }
+  } catch (error) { console.error('Could not save session:', error.message); }
 }
 function publicJob(job) {
   const { input, info, options, ...rest } = job;
   return rest;
 }
 function snapshot() {
-  return { jobs: jobs.map(publicJob), settings, engineReady: fs.existsSync(FFMPEG) && fs.existsSync(FFPROBE), version: '1.1.0', active: active.size, youtube: youtube.snapshot() };
+  return { jobs: jobs.map(publicJob), settings, engineReady: fs.existsSync(FFMPEG) && fs.existsSync(FFPROBE), version: '1.2.0', active: active.size, youtube: youtube.snapshot(), downloader: youtube.snapshot() };
 }
 function broadcast(save = true) {
   if (save) persist();
@@ -69,14 +76,14 @@ async function body(req) {
   let data = '';
   for await (const chunk of req) {
     data += chunk;
-    if (data.length > 1024 * 1024) throw new Error('İstek çok büyük.');
+    if (data.length > 1024 * 1024) throw new Error('Request too large.');
   }
   return data ? JSON.parse(data) : {};
 }
 function run(executable, args, job, onProgress, timeoutMs = 0) {
   return new Promise((resolve, reject) => {
     const child = spawn(executable, args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
-    const timeout = timeoutMs ? setTimeout(() => { child.kill(); reject(new Error('Dosya bilgileri zamanında okunamadı.')); }, timeoutMs) : null;
+    const timeout = timeoutMs ? setTimeout(() => { child.kill(); reject(new Error('File information could not be read in time.')); }, timeoutMs) : null;
     if (job) processes.set(job.id, child);
     let stdout = '', stderr = '';
     child.stdout.on('data', chunk => {
@@ -89,22 +96,44 @@ function run(executable, args, job, onProgress, timeoutMs = 0) {
       clearTimeout(timeout);
       if (job && processes.get(job.id) === child) processes.delete(job.id);
       if (code === 0) resolve(stdout);
-      else reject(new Error(stderr || 'Dönüştürme motoru çalıştırılamadı.'));
+      else reject(new Error(stderr || 'Failed to execute conversion engine.'));
     });
   });
 }
 function readableError(error) {
   const message = error.message || '';
-  if (/ENOSPC|No space left/i.test(message)) return 'Diskte yeterli boş alan yok. Yer açıp yeniden deneyin.';
-  if (/EACCES|EPERM|Permission denied/i.test(message)) return 'Klasöre yazılamıyor. Erişilebilir başka bir çıktı klasörü seçin.';
-  if (/ENOENT|No such file/i.test(message)) return 'Gerekli dosya veya klasör bulunamadı. Çıktı sürücüsünün bağlı olduğunu kontrol edin.';
-  if (/Invalid data|moov atom|could not find|does not contain|Error while decoding|Invalid input/i.test(message)) return 'Dosya okunamadı. Bozuk, desteklenmeyen veya korumalı bir dosya olabilir.';
-  return 'Dosya işlenemedi. Dosyanın oynatılabildiğini ve çıktı klasörünün erişilebilir olduğunu kontrol edin.';
+  if (/ENOSPC|No space left/i.test(message)) return 'Disk is full. Free up space and try again.';
+  if (/EACCES|EPERM|Permission denied/i.test(message)) return 'Cannot write to folder. Choose an accessible output folder.';
+  if (/ENOENT|No such file/i.test(message)) return 'Required file or folder not found. Ensure the output drive is connected.';
+  if (/Invalid data|moov atom|could not find|does not contain|Error while decoding|Invalid input/i.test(message)) return 'File could not be read. It may be corrupt, unsupported, or protected.';
+  return 'File could not be processed. Ensure the file can be played and the output folder is accessible.';
 }
-async function publishOutput(temp, dir, base) {
+async function saveUpload(req, destination) {
+  let received = 0;
+  const file = await fsp.open(destination, 'wx');
+  try {
+    for await (const chunk of req.iterator({ destroyOnReturn: false })) {
+      received += chunk.length;
+      if (received > MAX_UPLOAD_BYTES) {
+        req.resume();
+        const error = new Error(`File exceeds the ${Math.ceil(MAX_UPLOAD_BYTES / 1024 ** 2)} MB upload limit.`);
+        error.code = 'ETOOBIG'; throw error;
+      }
+      let offset = 0;
+      while (offset < chunk.length) {
+        const { bytesWritten } = await file.write(chunk, offset, chunk.length - offset, null);
+        if (!bytesWritten) throw new Error('Could not write uploaded file.');
+        offset += bytesWritten;
+      }
+    }
+  } finally {
+    await file.close();
+  }
+}
+async function publishOutput(temp, dir, base, ext = '.mp3') {
   await fsp.mkdir(dir, { recursive: true });
   for (let i = 0; ; i++) {
-    const target = path.join(dir, `${base}${i ? ` (${i + 1})` : ''}.mp3`);
+    const target = path.join(dir, `${base}${i ? ` (${i + 1})` : ''}${ext}`);
     try {
       await fsp.copyFile(temp, target, constants.COPYFILE_EXCL);
       return target;
@@ -115,7 +144,8 @@ async function convert(job) {
   active.add(job.id);
   job.status = 'converting'; job.progress = 0; job.error = ''; job.warning = '';
   broadcast();
-  const temp = path.join(INPUTS, `${job.id}.part.mp3`);
+  const formatInfo = getFormatInfo(job.options.format || 'mp3');
+  const temp = path.join(INPUTS, `${job.id}.part${formatInfo.ext}`);
   try {
     let buffer = '', last = 0;
     const progress = chunk => {
@@ -131,20 +161,23 @@ async function convert(job) {
       await run(FFMPEG, conversionArgs(job.input, temp, job.info, job.options, withCover), job, progress);
       if (job.status === 'canceled') throw new Error('Canceled');
       const result = JSON.parse(await run(FFPROBE, ['-v', 'error', '-show_entries', 'stream=codec_name,codec_type,sample_rate,channels', '-of', 'json', temp], job, null, 60000));
-      if (!result.streams?.some(s => s.codec_name === 'mp3' && s.codec_type === 'audio')) throw new Error('Invalid output audio');
+      const expectedCodec = formatInfo.id === 'wav' && job.options.quality === 24 ? 'pcm_s24le' : { mp3: 'mp3', wav: 'pcm_s16le', flac: 'flac', ogg: 'vorbis', aac: 'aac', opus: 'opus' }[formatInfo.id];
+      if (!result.streams?.some(s => s.codec_name === expectedCodec && s.codec_type === 'audio')) throw new Error('Invalid output audio');
     };
-    try { await encode(true); }
+    try { await encode(formatInfo.id === 'mp3'); }
     catch (error) {
-      if (job.status === 'canceled' || !job.hasCover || !job.options.cover) throw error;
+      if (job.status === 'canceled' || !job.hasCover || !job.options.cover || formatInfo.id !== 'mp3') throw error;
       // A malformed cover should not prevent the music from being converted.
-      job.warning = 'Kaynak kapak işlenemedi; ses kapaksız dönüştürüldü.';
+      job.warning = 'Source cover could not be processed; audio converted without cover.';
       await encode(false);
     }
     if (job.status === 'canceled') return;
-    job.output = await publishOutput(temp, job.options.outputDir, outputBase(job.name, job.options.ascii));
+    job.output = await publishOutput(temp, job.options.outputDir, outputBase(job.name, job.options.ascii), formatInfo.ext);
     job.outputSize = (await fsp.stat(job.output)).size;
     job.status = 'done'; job.progress = 100; job.completedAt = new Date().toISOString();
-    job.bitrate = job.options.bitrate;
+    job.quality = job.options.quality;
+    job.bitrate = ['mp3', 'aac', 'opus'].includes(formatInfo.id) ? job.options.quality : undefined;
+    job.format = formatInfo.id;
     await fsp.rm(job.input, { force: true }).catch(() => {});
   } catch (error) {
     if (job.status !== 'canceled') { job.status = 'error'; job.error = readableError(error); }
@@ -163,15 +196,22 @@ function pump() {
   }
 }
 async function upload(req, res, url) {
-  if (!fs.existsSync(FFPROBE)) return json(res, { error: 'FFprobe bulunamadı. Başlat dosyasıyla kurulumu tamamlayın.' }, 503);
+  if (!fs.existsSync(FFPROBE)) return json(res, { error: 'FFprobe not found. Complete setup by running Start.cmd.' }, 503);
+  const declaredLength = Number(req.headers['content-length']);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_UPLOAD_BYTES) {
+    res.setHeader('Connection', 'close');
+    res.once('finish', () => req.destroy());
+    req.resume();
+    return json(res, { error: `File exceeds the ${Math.ceil(MAX_UPLOAD_BYTES / 1024 ** 2)} MB upload limit.` }, 413);
+  }
   const name = path.win32.basename(url.searchParams.get('name') || '');
-  if (!extensions.has(path.extname(name).toLowerCase())) return json(res, { error: 'Bu dosya uzantısı desteklenmiyor.' }, 400);
+  if (!extensions.has(path.extname(name).toLowerCase())) return json(res, { error: 'This file extension is not supported.' }, 400);
   const id = randomUUID();
   const input = path.join(INPUTS, `${id}${path.extname(name).toLowerCase()}`);
   const temp = `${input}.upload`;
   uploadsActive++;
   try {
-    await pipeline(req, fs.createWriteStream(temp, { flags: 'wx' }));
+    await saveUpload(req, temp);
     const size = (await fsp.stat(temp)).size;
     if (!size) throw new Error('Invalid data');
     await fsp.rename(temp, input);
@@ -187,7 +227,8 @@ async function upload(req, res, url) {
   } catch (error) {
     await fsp.rm(temp, { force: true }).catch(() => {});
     await fsp.rm(input, { force: true }).catch(() => {});
-    if (!res.destroyed) json(res, { error: readableError(error) }, 400);
+    const tooLarge = error.code === 'ETOOBIG';
+    if (!res.destroyed) json(res, { error: tooLarge ? `File exceeds the ${Math.ceil(MAX_UPLOAD_BYTES / 1024 ** 2)} MB upload limit.` : readableError(error) }, tooLarge ? 413 : 400);
   } finally {
     uploadsActive--;
   }
@@ -197,13 +238,15 @@ const staticFiles = { '/': ['index.html', 'text/html'], '/styles.css': ['styles.
 const server = http.createServer(async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'");
   const allowedHosts = [`127.0.0.1:${PORT}`, `localhost:${PORT}`];
-  if (!allowedHosts.includes(req.headers.host)) return json(res, { error: 'Geçersiz bağlantı.' }, 403);
-  if (req.headers.origin && !allowedHosts.some(h => req.headers.origin === `http://${h}`)) return json(res, { error: 'Yalnızca yerel arayüzden erişilebilir.' }, 403);
-  if (req.headers['sec-fetch-site'] === 'cross-site') return json(res, { error: 'Harici erişime kapalı.' }, 403);
+  if (!allowedHosts.includes(req.headers.host)) return json(res, { error: 'Invalid connection.' }, 403);
+  if (req.headers.origin && !allowedHosts.some(h => req.headers.origin === `http://${h}`)) return json(res, { error: 'Only accessible from the local interface.' }, 403);
+  if (req.headers['sec-fetch-site'] === 'cross-site') return json(res, { error: 'External access forbidden.' }, 403);
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
-  if (req.method !== 'GET' && req.headers['x-roadwave-token'] !== TOKEN) return json(res, { error: 'Oturum yenilenmeli. Sayfayı yenileyin.' }, 403);
+  if (req.method !== 'GET' && req.headers['x-soundwave-token'] !== TOKEN) return json(res, { error: 'Session expired. Refresh the page.' }, 403);
   try {
     if (req.method === 'GET' && url.pathname === '/api/state') return json(res, { ...snapshot(), token: TOKEN });
     if (req.method === 'GET' && url.pathname === '/api/events') {
@@ -212,9 +255,10 @@ const server = http.createServer(async (req, res) => {
       req.on('close', () => clients.delete(res)); return;
     }
     if (req.method === 'POST' && url.pathname === '/api/upload') return await upload(req, res, url);
-    if (req.method === 'POST' && url.pathname.startsWith('/api/youtube/')) {
+    if (req.method === 'POST' && (url.pathname.startsWith('/api/downloader/') || url.pathname.startsWith('/api/youtube/'))) {
       const value = await body(req);
-      const action = url.pathname.slice('/api/youtube/'.length);
+      const prefix = url.pathname.startsWith('/api/downloader/') ? '/api/downloader/' : '/api/youtube/';
+      const action = url.pathname.slice(prefix.length);
       if (action === 'inspect') return json(res, await youtube.inspect(value));
       if (action === 'enqueue') return json(res, youtube.enqueue(value, settings));
       if (action === 'cancel-inspect') { youtube.cancelInspection(); return json(res, { ok: true }); }
@@ -222,25 +266,25 @@ const server = http.createServer(async (req, res) => {
       if (action === 'retry') { youtube.retry(value.id); return json(res, { ok: true }); }
       if (action === 'remove') { await youtube.remove(value); return json(res, { ok: true }); }
       if (action === 'update') return json(res, await youtube.update());
-      return json(res, { error: 'İşlem bulunamadı.' }, 404);
+      return json(res, { error: 'Operation not found.' }, 404);
     }
     if (req.method === 'POST' && url.pathname === '/api/shutdown') {
-      if (active.size || uploadsActive || pickerBusy || youtube.busy) return json(res, { error: 'Önce devam eden işlemleri tamamlayın veya durdurun; açık klasör seçme penceresini kapatın.' }, 409);
+      if (active.size || uploadsActive || pickerBusy || youtube.busy) return json(res, { error: 'Complete or stop ongoing operations first; close any open folder picker.' }, 409);
       json(res, { ok: true }); setTimeout(shutdown, 100); return;
     }
     if (req.method === 'POST' && url.pathname === '/api/settings') {
       const value = await body(req);
       const next = settingsFrom(value);
       const parallel = Number(value.parallel ?? settings.parallel);
-      if (![1, 2, 4].includes(parallel)) throw new Error('Geçersiz paralel işlem sayısı.');
+      if (![1, 2, 4].includes(parallel)) throw new Error('Invalid parallel processing count.');
       settings = { ...settings, ...next, parallel }; broadcast(); return json(res, settings);
     }
     if (req.method === 'POST' && url.pathname === '/api/start') {
-      if (!fs.existsSync(FFMPEG)) throw new Error('FFmpeg bulunamadı. Kurulumu tamamlayın.');
+      if (!fs.existsSync(FFMPEG)) throw new Error('FFmpeg not found. Complete installation.');
       const value = await body(req);
       const targets = value.id ? jobs.filter(j => j.id === value.id) : jobs.filter(j => j.status === 'ready');
       for (const job of targets) if (['ready', 'error', 'canceled'].includes(job.status) && !active.has(job.id)) {
-        if (!fs.existsSync(job.input)) { job.status = 'error'; job.error = 'Kaynak kopya bulunamadı. Dosyayı yeniden ekleyin.'; continue; }
+        if (!fs.existsSync(job.input)) { job.status = 'error'; job.error = 'Source copy not found. Add the file again.'; continue; }
         job.options = { ...settings }; job.status = 'queued'; job.error = ''; job.progress = 0;
       }
       broadcast(); pump(); return json(res, { ok: true });
@@ -260,7 +304,7 @@ const server = http.createServer(async (req, res) => {
       broadcast(); return json(res, { ok: true });
     }
     if (req.method === 'POST' && url.pathname === '/api/folder') {
-      if (pickerBusy) return json(res, { error: 'Klasör seçme penceresi zaten açık.' }, 409);
+      if (pickerBusy) return json(res, { error: 'Folder selection dialog is already open.' }, 409);
       pickerBusy = true;
       try {
         const selected = (await run('powershell.exe', ['-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass', '-File', path.join(ROOT, 'scripts/select-folder.ps1')])).trim();
@@ -279,13 +323,15 @@ const server = http.createServer(async (req, res) => {
     const match = /^\/api\/audio\/([a-f0-9-]+)$/.exec(url.pathname);
     if (req.method === 'GET' && match) {
       const job = [...jobs, ...youtube.jobs].find(j => j.id === match[1] && j.status === 'done');
-      if (!job) return json(res, { error: 'Dosya bulunamadı.' }, 404);
-      let stat; try { stat = await fsp.stat(job.output); } catch { return json(res, { error: 'Çıktı taşınmış veya silinmiş.' }, 404); }
+      if (!job) return json(res, { error: 'File not found.' }, 404);
+      let stat; try { stat = await fsp.stat(job.output); } catch { return json(res, { error: 'Output file moved or deleted.' }, 404); }
       const range = req.headers.range?.match(/^bytes=(\d+)-(\d*)$/);
       const start = range ? Number(range[1]) : 0;
       const end = range?.[2] ? Math.min(Number(range[2]), stat.size - 1) : stat.size - 1;
       if (start > end || start >= stat.size) { res.writeHead(416, { 'Content-Range': `bytes */${stat.size}` }); return res.end(); }
-      const headers = { 'Content-Type': job.format === 'mp4' ? 'video/mp4' : 'audio/mpeg', 'Accept-Ranges': 'bytes', 'Content-Length': end - start + 1 };
+      const mimeTypes = { mp3: 'audio/mpeg', wav: 'audio/wav', flac: 'audio/flac', ogg: 'audio/ogg', opus: 'audio/ogg', m4a: 'audio/mp4', aac: 'audio/mp4', mp4: 'video/mp4' };
+      const contentType = mimeTypes[job.format || job.options?.format] || 'audio/mpeg';
+      const headers = { 'Content-Type': contentType, 'Accept-Ranges': 'bytes', 'Content-Length': end - start + 1 };
       if (range) headers['Content-Range'] = `bytes ${start}-${end}/${stat.size}`;
       if (url.searchParams.has('download')) headers['Content-Disposition'] = `attachment; filename*=UTF-8''${encodeURIComponent(path.basename(job.output)).replace(/'/g, '%27')}`;
       res.writeHead(range ? 206 : 200, headers);
@@ -296,13 +342,13 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': `${type}; charset=utf-8`, 'Cache-Control': 'no-cache' });
       return res.end(await fsp.readFile(path.join(ROOT, 'public', file)));
     }
-    json(res, { error: 'Bulunamadı.' }, 404);
+    json(res, { error: 'Not found.' }, 404);
   } catch (error) {
     if (!res.headersSent) json(res, { error: error.message.length < 180 ? error.message : readableError(error) }, 400);
     else res.end();
   }
 });
-server.requestTimeout = 0;
+server.requestTimeout = REQUEST_TIMEOUT_MS;
 const heartbeat = setInterval(() => { for (const res of clients) res.write(': heartbeat\n\n'); }, 20000);
 heartbeat.unref();
 function openBrowser() {
@@ -315,20 +361,20 @@ server.on('error', async error => {
       const response = await fetch(`http://127.0.0.1:${PORT}/api/state`);
       const data = await response.json();
       if (data.version && data.settings && data.token) {
-        console.log(`Roadwave zaten açık: http://127.0.0.1:${PORT}`);
+        console.log(`SoundWave is already running: http://127.0.0.1:${PORT}`);
         if (process.argv.includes('--open')) openBrowser();
         process.exit(0);
       }
     } catch {}
   }
-  console.error(`Başlatılamadı: ${error.message}`); process.exit(1);
+  console.error(`Failed to start: ${error.message}`); process.exit(1);
 });
 server.listen(PORT, '127.0.0.1', () => {
   // Cleanup only after acquiring the port, so a second launcher cannot touch an active conversion.
   for (const name of fs.readdirSync(INPUTS)) {
-    if (name.endsWith('.part.mp3') || name.endsWith('.upload')) fs.rmSync(path.join(INPUTS, name), { force: true });
+    if (name.includes('.part.') || name.endsWith('.upload')) fs.rmSync(path.join(INPUTS, name), { force: true });
   }
-  console.log(`Roadwave hazır: http://127.0.0.1:${PORT}`);
+  console.log(`SoundWave ready: http://127.0.0.1:${PORT}`);
   if (process.argv.includes('--open')) openBrowser();
 });
 function shutdown() {

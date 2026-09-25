@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101412"><title>Roadwave — Medya Dönüştürücü & YouTube İndirici</title>
+  <meta name="theme-color" content="#0a0a0a"><title>SoundWave — Media Converter & YouTube Downloader</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/youtube.css">
   <script src="/app.js" defer></script><script src="/youtube.js" defer></script>
@@ -23,97 +23,102 @@
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/></symbol>
   <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8z"/></symbol>
   <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
-  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 8a9 9 0 1 0 1 8M20 3v6h-6"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 8a9 9 0 1 0 1 8M20 3v6-6"/></symbol>
 
 </defs></svg>
 <div class="app-shell">
   <aside class="sidebar">
-    <a class="brand" href="/" aria-label="Roadwave ana sayfa"><span class="brand-mark"><svg><use href="#i-wave"/></svg></span>roadwave<span class="brand-dot">.</span></a>
-    <span class="side-label">ÇALIŞMA ALANI</span>
-    <nav aria-label="Ana menü">
-      <button class="nav-item selected" id="nav-convert"><svg><use href="#i-grid"/></svg>Dönüştürücü<span class="nav-active-dot"></span></button>
-      <button class="nav-item" id="nav-youtube" title="YouTube indirici"><svg><use href="#i-play"/></svg>YouTube<span class="new-badge">YENİ</span></button>
-      <button class="nav-item" id="nav-output"><svg><use href="#i-folder"/></svg>Çıktı klasörü<svg class="small-arrow"><use href="#i-arrow"/></svg></button>
+    <a class="brand" href="/" aria-label="SoundWave home"><span class="brand-mark"><svg><use href="#i-wave"/></svg></span>soundwave<span class="brand-dot">.</span></a>
+    <span class="side-label">WORKSPACE</span>
+    <nav aria-label="Main menu">
+      <button class="nav-item selected" id="nav-convert"><svg><use href="#i-grid"/></svg><span>Converter</span><span class="nav-active-dot"></span></button>
+      <button class="nav-item" id="nav-youtube" title="YouTube Downloader"><svg><use href="#i-download"/></svg><span>Downloader</span><span class="new-badge">NEW</span></button>
+      <button class="nav-item" id="nav-output"><svg><use href="#i-folder"/></svg><span>Output folder</span><svg class="small-arrow"><use href="#i-arrow"/></svg></button>
 
     </nav>
     <div class="sidebar-bottom">
-      <div class="private-card"><svg><use href="#i-shield"/></svg><strong>Dosyaların seninle kalır.</strong><p>Dönüşümler yereldir.<br>YouTube için internet gerekir.</p><span><i></i> Uygulamada günlük kota yok</span></div>
-      <div class="version"><span>ROADWAVE</span><span>v1.1</span></div>
-      <button id="shutdown-button" class="text-button shutdown-button">Uygulamayı kapat</button>
+      <div class="private-card"><svg><use href="#i-shield"/></svg><strong>Your files stay with you.</strong><p>Conversions are local.<br>Internet required for downloads.</p><span><i></i> <span>No daily quota in the app</span></span></div>
+      <div class="version"><span>SOUNDWAVE</span><span>v1.2</span></div>
+      <button id="shutdown-button" class="text-button shutdown-button">Shut down</button>
     </div>
   </aside>
   <div class="workspace">
-    <header class="topbar"><div>Çalışma alanı <span>/</span> <strong>Dönüştürücü</strong></div><span class="connection" id="connection"><i></i> Bağlanıyor</span></header>
+    <header class="topbar">
+      <div><span>Workspace</span> <span>/</span> <strong>Converter</strong></div>
+      <div class="topbar-right">
+        <span class="connection" id="connection"><i></i> <span>Connecting</span></span>
+      </div>
+    </header>
     <main>
       <section class="intro">
-        <div><div class="eyebrow"><span></span> MÜZİĞİN, SINIRSIZ.</div><h1>Dönüştür, indir<br>ve dinle<span>.</span></h1><p>Favori parçalarını ekle. MP3'e dönüştür. Hemen dinlemeye başla.</p></div>
+        <div><div class="eyebrow"><span></span> YOUR MUSIC, UNLIMITED.</div><h1>Convert, download<br>and listen<span>.</span></h1><p>Add favorites. Convert to MP3. Listen immediately.</p></div>
         <div class="sound-art" aria-hidden="true"><div class="sound-ring"></div><div class="sound-bars"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div><span>CONVERT & DOWNLOAD</span></div>
       </section>
-      <div id="engine-warning" class="banner hidden" role="alert">Dönüştürme motoru bulunamadı. Baslat.cmd dosyasını çalıştırarak kurulumu tamamlayın.</div>
+      <div id="engine-warning" class="banner hidden" role="alert">Conversion engine not found. Run Start.cmd to complete installation.</div>
       <div class="main-grid" id="converter-panel">
-        <section class="files-column" aria-label="Dosyalar">
-          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Ses dosyalarını seç veya buraya sürükle">
+        <section class="files-column" aria-label="Files">
+          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Select audio files or drop them here">
             <div class="upload-symbol"><svg><use href="#i-upload"/></svg><span>+</span></div>
-            <h2>Müziğini buraya bırak</h2><p>veya <span class="text-link">bilgisayarından seç</span></p>
-            <div class="format-tags"><span>M4A</span><span>AAC</span><span>FLAC</span><span>WAV</span><span>+ diğerleri</span></div>
+            <h2>Drop your music here</h2><p>or <span class="text-link">select from computer</span></p>
+            <div class="format-tags"><span>M4A</span><span>AAC</span><span>FLAC</span><span>WAV</span><span>+ others</span></div>
             <div class="upload-status hidden" id="upload-status" aria-live="polite"></div>
           </div>
-          <input id="file-input" type="file" multiple accept=".m4a,.aac,.mp3,.wav,.flac,.ogg,.opus,.wma,.aiff,.aif,.alac,.mp4,.m4b,.webm" hidden>
+          <input id="file-input" type="file" multiple accept=".m4a,.aac,.mp3,.wav,.flac,.ogg,.opus,.wma,.aiff,.aif,.alac,.mp4,.m4b,.webm,.mov,.mkv,.mka" hidden>
           <section class="queue-panel">
-            <div class="queue-heading"><div><h2>Dönüştürme kuyruğu <span id="queue-count">0</span></h2><p id="queue-summary">Biraz müzik ekleyerek başlayalım.</p></div><button id="add-files" class="icon-button" title="Dosya ekle" aria-label="Dosya ekle"><svg><use href="#i-plus"/></svg></button></div>
-            <div class="queue-toolbar"><div class="tabs" role="group" aria-label="Kuyruk filtresi"><button class="active" data-filter="all">Tümü</button><button data-filter="done">Tamamlanan <span id="done-count">0</span></button></div><button id="clear-done" class="text-button" disabled>Listeyi temizle</button></div>
+            <div class="queue-heading"><div><h2><span>Conversion queue</span> <span id="queue-count">0</span></h2><p id="queue-summary">Let's start by adding some music.</p></div><button id="add-files" class="icon-button" title="Add files" aria-label="Add files"><svg><use href="#i-plus"/></svg></button></div>
+            <div class="queue-toolbar"><div class="tabs" role="group" aria-label="Queue filter"><button class="active" data-filter="all">All</button><button data-filter="done"><span>Completed</span> <span id="done-count">0</span></button></div><button id="clear-done" class="text-button" disabled>Clear list</button></div>
             <div id="job-list" class="job-list"></div>
-            <div id="empty-state" class="empty-state"><div class="empty-icon"><svg><use href="#i-music"/></svg></div><strong>Müzik ekleyerek başla.</strong><p>Eklediğin parçalar ve dönüşüm durumları burada görünecek.</p><span>Dosya sayısı sınırı yok <b>·</b> Orijinaller korunur</span></div>
-            <div class="queue-footer"><span><i class="dot"></i> <span id="queue-footer-text">Dönüştürmeye hazır</span></span><button id="cancel-all" class="text-button hidden">İşlemleri durdur</button><span id="total-size">0 MB</span></div>
+            <div id="empty-state" class="empty-state"><div class="empty-icon"><svg><use href="#i-music"/></svg></div><strong>Start by adding music.</strong><p>Tracks and conversion status will appear here.</p><span>No file limit <b>·</b> Originals preserved</span></div>
+            <div class="queue-footer"><span><i class="dot"></i> <span id="queue-footer-text">Ready to convert</span></span><button id="cancel-all" class="text-button hidden">Stop all</button><span id="total-size">0 MB</span></div>
           </section>
-          <div class="trust-row"><span><svg><use href="#i-shield"/></svg>Gizli ve yerel</span><span><svg><use href="#i-wave"/></svg>Gerçek FFmpeg motoru</span><span><svg><use href="#i-check"/></svg>Günlük kota yok</span></div>
+          <div class="trust-row"><span><svg><use href="#i-shield"/></svg><span>Private & local</span></span><span><svg><use href="#i-wave"/></svg><span>Real FFmpeg engine</span></span><span><svg><use href="#i-check"/></svg><span>No daily quota</span></span></div>
         </section>
-        <aside class="settings-column" aria-label="Dönüştürme ayarları">
+        <aside class="settings-column" aria-label="Conversion settings">
           <section class="settings-panel">
-            <div class="panel-title"><h2>Dönüştürme ayarları</h2><svg><use href="#i-wave"/></svg></div>
-            <div class="car-profile"><div class="car-icon"><svg><use href="#i-music"/></svg></div><div><span>ÇIKTI PROFİLİ</span><strong>MP3 Standart</strong><p>44,1 kHz · Stereo · ID3v2.3</p></div><span class="profile-check"><svg><use href="#i-check"/></svg></span></div>
-            <div class="setting-group"><label>Çıktı formatı</label><div class="format-choice"><span class="mp3-icon"><svg><use href="#i-music"/></svg></span><div><strong>MP3</strong><span>Evrensel ses formatı</span></div><span class="badge">EVRENSEL</span></div></div>
-            <div class="setting-group"><div class="label-row"><label for="bitrate">Ses kalitesi</label><span id="quality-label">Dengeli</span></div><div class="quality-options" id="bitrate" role="group" aria-label="Ses kalitesi"><button data-bitrate="128">128</button><button data-bitrate="192" class="active">192</button><button data-bitrate="256">256</button><button data-bitrate="320">320</button></div><div class="quality-caption"><span>kbps · sabit bit hızı</span><span>44,1 kHz · stereo</span></div></div>
+            <div class="panel-title"><h2>Conversion settings</h2><svg><use href="#i-wave"/></svg></div>
+            <div class="car-profile"><div class="car-icon"><svg><use href="#i-music"/></svg></div><div><span>OUTPUT PROFILE</span><strong>MP3 Standard</strong><p>44.1 kHz · Stereo · ID3v2.3</p></div><span class="profile-check"><svg><use href="#i-check"/></svg></span></div>
+            <div class="setting-group"><label>Output format</label><div class="format-select-group" id="output-format" role="group" aria-label="Output format"><button data-format="mp3" class="active">MP3</button><button data-format="aac">M4A</button><button data-format="flac">FLAC</button><button data-format="wav">WAV</button><button data-format="opus">OPUS</button><button data-format="ogg">OGG</button></div></div>
+            <div class="setting-group"><div class="label-row"><label for="quality-options">Audio quality</label><span id="quality-label">Balanced</span></div><div class="quality-options" id="quality-options" role="group" aria-label="Audio quality"><button data-quality="128">128</button><button data-quality="192" class="active">192</button><button data-quality="256">256</button><button data-quality="320">320</button></div><div class="quality-caption"><span id="quality-mode">kbps · constant bitrate</span><span id="quality-details">44.1 kHz · stereo</span></div></div>
             <div class="setting-separator"></div>
-            <label class="toggle-row"><span><strong>Albüm kapağını koru</strong><small>Dosyada varsa MP3’e ekle</small></span><input id="cover-toggle" type="checkbox" checked><span class="switch"></span></label>
-            <label class="toggle-row"><span><strong>Sade dosya adları</strong><small>Türkçe harfleri Latin harflere çevir</small></span><input id="ascii-toggle" type="checkbox"><span class="switch"></span></label>
-            <div class="setting-group output-group"><div class="label-row"><label>Kaydedilecek klasör</label><button id="choose-folder" class="text-link">Değiştir</button></div><button id="output-path-button" class="output-path" title="Çıktı klasörünü aç"><svg><use href="#i-folder"/></svg><span id="output-path">outputs</span><svg><use href="#i-arrow"/></svg></button><small>Orijinal dosyalarına dokunulmaz.</small></div>
-            <details class="advanced"><summary>Gelişmiş ayarlar</summary><label for="parallel">Aynı anda işlenen dosya</label><select id="parallel"><option value="1">1 — Düşük sistem kullanımı</option><option value="2" selected>2 — Dengeli (önerilen)</option><option value="4">4 — Daha hızlı toplu işlem</option></select><p>Yeni ayarlar sıradaki başlatacağın işlemlerde kullanılır.</p></details>
-            <button id="start-button" class="primary-button" disabled><svg><use href="#i-wave"/></svg><span>MP3’e dönüştür</span><svg><use href="#i-arrow"/></svg></button>
-            <p id="start-hint" class="start-hint">Başlamak için ses dosyası ekle</p>
+            <label class="toggle-row"><span><strong>Keep album cover</strong><small>Add to output if available</small></span><input id="cover-toggle" type="checkbox" checked><span class="switch"></span></label>
+            <label class="toggle-row"><span><strong>Clean filenames</strong><small>Convert special characters to Latin</small></span><input id="ascii-toggle" type="checkbox"><span class="switch"></span></label>
+            <div class="setting-group output-group"><div class="label-row"><label>Output folder</label><button id="choose-folder" class="text-link">Change</button></div><button id="output-path-button" class="output-path" title="Open output folder"><svg><use href="#i-folder"/></svg><span id="output-path">outputs</span><svg><use href="#i-arrow"/></svg></button><small>Originals are untouched.</small></div>
+            <details class="advanced"><summary>Advanced settings</summary><label for="parallel">Files processed at the same time</label><select id="parallel"><option value="1">1 — Low system usage</option><option value="2" selected>2 — Balanced (recommended)</option><option value="4">4 — Faster batch processing</option></select><p>New settings will apply to your next operations.</p></details>
+            <button id="start-button" class="primary-button" disabled><svg><use href="#i-wave"/></svg><span>Convert to MP3</span><svg><use href="#i-arrow"/></svg></button>
+            <p id="start-hint" class="start-hint">Add audio files to start</p>
           </section>
         </aside>
       </div>
-      <section id="youtube-panel" class="hidden" aria-label="YouTube indirici">
+      <section id="youtube-panel" class="hidden" aria-label="Media downloader">
         <div class="yt-grid">
           <div>
             <section class="yt-link-panel">
-              <div class="yt-section-label"><span class="yt-logo"><svg><use href="#i-play"/></svg></span><span>YOUTUBE’DAN KÜTÜPHANENE</span><span class="yt-online-tag">Video & Playlist</span></div>
-              <h2>Bir bağlantı, tüm favorilerin.</h2><p>Video, Shorts veya oynatma listesi bağlantısını yapıştır.</p>
-              <form id="yt-form"><label class="sr-only" for="yt-url">YouTube bağlantısı</label><div class="yt-url-row"><input id="yt-url" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://www.youtube.com/watch?v=…" required><button id="yt-inspect" type="submit">Bağlantıyı incele <svg><use href="#i-arrow"/></svg></button></div><div class="yt-scope"><label><input type="radio" name="yt-scope" value="video" checked> Yalnızca video</label><label><input type="radio" name="yt-scope" value="playlist"> Bağlı oynatma listesi</label></div></form>
-              <div id="yt-inspect-status" class="yt-inspect-status hidden" role="status"><span class="yt-spinner"></span><span>Bağlantı inceleniyor…</span><button id="yt-cancel-inspect" class="text-button">Durdur</button></div>
+              <div class="yt-section-label"><span class="yt-logo"><svg><use href="#i-download"/></svg></span><span>FROM YOUTUBE TO YOUR LIBRARY</span><span class="yt-online-tag">Video, Short & Playlist</span></div>
+              <h2>One link, all your favorites.</h2><p>Paste a YouTube link.</p>
+              <form id="yt-form"><label class="sr-only" for="yt-url">Download link</label><div class="yt-url-row"><input id="yt-url" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="Paste a YouTube link (video, Short, playlist)..." required><button id="yt-inspect" type="submit">Inspect Link <svg><use href="#i-arrow"/></svg></button></div><div class="yt-scope"><label><input type="radio" name="yt-scope" value="video" checked> Only video</label><label><input type="radio" name="yt-scope" value="playlist"> Linked playlist</label></div></form>
+              <div id="yt-inspect-status" class="yt-inspect-status hidden" role="status"><span class="yt-spinner"></span><span>Inspecting link…</span><button id="yt-cancel-inspect" class="text-button">Stop</button></div>
               <div id="yt-error" class="yt-error hidden" role="alert"></div>
             </section>
-            <section id="yt-preview" class="yt-preview hidden"><div class="queue-heading"><div><h2 id="yt-preview-title">Önizleme</h2><p id="yt-preview-summary"></p></div></div><div class="yt-selection-bar"><label><input id="yt-select-all" type="checkbox" checked> Tümünü seç</label><span id="yt-selection-count"></span></div><div id="yt-preview-list" class="yt-preview-list"></div><button id="yt-show-more" class="text-button hidden">Daha fazla göster</button><div class="yt-preview-footer"><span>İndirilenler otomatik kaydedilir.</span><button id="yt-enqueue" class="primary-button"><svg><use href="#i-download"/></svg><span>Seçilenleri indir</span></button></div></section>
-            <section class="queue-panel yt-queue"><div class="queue-heading"><div><h2>İndirme kuyruğu <span id="yt-count">0</span></h2><p id="yt-summary">Favorilerin için yeni bir yer.</p></div><button id="yt-clear" class="text-button" disabled>Tamamlananları kaldır</button></div><div id="yt-jobs" class="job-list"></div><div id="yt-empty" class="empty-state"><div class="empty-icon"><svg><use href="#i-download"/></svg></div><strong>Bir bağlantıyla başla.</strong><p>İndirmelerin, ilerlemeleri ve hazır dosyaların burada görünecek.</p></div><div class="queue-footer"><span id="yt-queue-status">İndirme bekleniyor</span><button id="yt-cancel-all" class="text-button hidden">İndirmeleri durdur</button></div></section>
+            <section id="yt-preview" class="yt-preview hidden"><div class="queue-heading"><div><h2 id="yt-preview-title">Preview</h2><p id="yt-preview-summary"></p></div></div><div class="yt-selection-bar"><label><input id="yt-select-all" type="checkbox" checked> Select All</label><span id="yt-selection-count"></span></div><div id="yt-preview-list" class="yt-preview-list"></div><button id="yt-show-more" class="text-button hidden">Show more</button><div class="yt-preview-footer"><span>Downloads are automatically saved.</span><button id="yt-enqueue" class="primary-button"><svg><use href="#i-download"/></svg><span>Download Selected</span></button></div></section>
+            <section class="queue-panel yt-queue"><div class="queue-heading"><div><h2>Download Queue <span id="yt-count">0</span></h2><p id="yt-summary">A new place for your favorites.</p></div><button id="yt-clear" class="text-button" disabled>Clear Completed</button></div><div id="yt-jobs" class="job-list"></div><div id="yt-empty" class="empty-state"><div class="empty-icon"><svg><use href="#i-download"/></svg></div><strong>Start with a link.</strong><p>Your downloads, progress, and ready files will appear here.</p></div><div class="queue-footer"><span id="yt-queue-status">Waiting for download</span><button id="yt-cancel-all" class="text-button hidden">Stop all</button></div></section>
           </div>
           <aside>
-            <section class="settings-panel yt-settings"><div class="panel-title"><h2>İndirme ayarları</h2><svg><use href="#i-download"/></svg></div><label class="yt-field-label">Kaydetme biçimi</label><div class="yt-format-options" role="group" aria-label="İndirme biçimi"><button class="active" data-yt-format="mp3"><svg><use href="#i-music"/></svg><strong>MP3</strong><span>Yalnızca ses</span></button><button data-yt-format="mp4"><svg><use href="#i-play"/></svg><strong>MP4</strong><span>Video + ses</span></button></div>
-              <div id="yt-audio-options"><div class="setting-group"><label class="yt-field-label" for="yt-bitrate">Ses kalitesi</label><select id="yt-bitrate"><option value="128">128 kbps · Kompakt</option><option value="192" selected>192 kbps · Önerilen</option><option value="256">256 kbps · Yüksek</option><option value="320">320 kbps · En yüksek bit hızı</option></select></div><p class="yt-setting-help">44,1 kHz · Stereo · ID3v2.3</p><label class="toggle-row"><span><strong>Video görselini kapak yap</strong><small>Varsa, MP3’e gömülü olarak ekle</small></span><input id="yt-cover" type="checkbox" checked><span class="switch"></span></label></div>
-              <div id="yt-video-options" class="hidden"><div class="setting-group"><label class="yt-field-label" for="yt-resolution">En yüksek çözünürlük</label><select id="yt-resolution"><option value="360">360p · Küçük dosya</option><option value="480">480p · Standart</option><option value="720">720p · HD</option><option value="1080" selected>1080p · Full HD</option><option value="1440">1440p · 2K</option><option value="2160">2160p · 4K</option></select></div><p class="yt-setting-help">Kaynakta bulunan, seçimine kadar en iyi kalite. H.264 + AAC; gerektiğinde dönüştürülür.</p></div>
-              <div class="setting-separator"></div><label class="toggle-row"><span><strong>Sade dosya adları</strong><small>Türkçe harfleri Latin harflere çevir</small></span><input id="yt-ascii" type="checkbox"><span class="switch"></span></label>
-              <div class="setting-group"><div class="label-row"><label>Kaydedilecek ana klasör</label><button id="yt-choose-folder" class="text-link">Değiştir</button></div><button id="yt-output-folder" class="output-path"><svg><use href="#i-folder"/></svg><span id="yt-output-path">outputs</span><svg><use href="#i-arrow"/></svg></button><p class="yt-setting-help">Dosyalar YouTube alt klasörüne kaydedilir. Listeler kendi klasöründe, sıralı adlarla tutulur.</p></div>
-              <div class="yt-engine"><div><strong>İndirme motoru</strong><span id="yt-engine-status">Kontrol ediliyor…</span></div><button id="yt-update" class="icon-button" aria-label="YouTube motorunu kur veya güncelle" title="Motoru kur / güncelle"><svg><use href="#i-refresh"/></svg></button></div><p class="yt-setting-help">YouTube değiştiğinde motoru bu düğmeden güncelleyebilirsin.</p>
-            </section><div class="yt-note"><svg><use href="#i-info"/></svg><p>YouTube erişim ve hız sınırlamaları uygulayabilir. MP4 video içerir, yalnızca ses için MP3 seçeneğini kullanın.</p></div>
+            <section class="settings-panel yt-settings"><div class="panel-title"><h2>Download Settings</h2><svg><use href="#i-download"/></svg></div><label class="yt-field-label">Save Format</label><div class="yt-format-options" role="group" aria-label="Download format"><button class="active" data-yt-format="mp3"><svg><use href="#i-music"/></svg><strong>MP3</strong><span>Audio only</span></button><button data-yt-format="mp4"><svg><use href="#i-play"/></svg><strong>MP4</strong><span>Video + audio</span></button></div>
+              <div id="yt-audio-options"><div class="setting-group"><label class="yt-field-label" for="yt-bitrate">Audio Quality</label><select id="yt-bitrate"><option value="128">128 kbps — Compact</option><option value="192" selected>192 kbps — Recommended</option><option value="256">256 kbps — High</option><option value="320">320 kbps — Highest bitrate</option></select></div><p class="yt-setting-help">44.1 kHz · Stereo · ID3v2.3</p><label class="toggle-row"><span><strong>Embed Video / Album Cover</strong><small>Add high-res cover to MP3 if available</small></span><input id="yt-cover" type="checkbox" checked><span class="switch"></span></label></div>
+              <div id="yt-video-options" class="hidden"><div class="setting-group"><label class="yt-field-label" for="yt-resolution">Highest Resolution</label><select id="yt-resolution"><option value="360">360p — Small file</option><option value="480">480p — Standard</option><option value="720">720p — HD</option><option value="1080" selected>1080p — Full HD</option><option value="1440">1440p — 2K</option><option value="2160">2160p — 4K</option></select></div><p class="yt-setting-help">Best quality up to your choice. H.264 + AAC; converted when needed.</p></div>
+              <div class="setting-separator"></div><label class="toggle-row"><span><strong>Clean Filenames</strong><small>Convert special characters to Latin</small></span><input id="yt-ascii" type="checkbox"><span class="switch"></span></label>
+              <div class="setting-group"><div class="label-row"><label>Output Folder</label><button id="yt-choose-folder" class="text-link">Change</button></div><button id="yt-output-folder" class="output-path"><svg><use href="#i-folder"/></svg><span id="yt-output-path">outputs</span><svg><use href="#i-arrow"/></svg></button><p class="yt-setting-help">Files will be saved in a YouTube folder inside the selected output folder.</p></div>
+              <div class="yt-engine"><div><strong>Download Engine</strong><span id="yt-engine-status">Checking…</span></div><button id="yt-update" class="icon-button" aria-label="Install or update download engine" title="Install / update engine"><svg><use href="#i-refresh"/></svg></button></div><p class="yt-setting-help">You can update the engine from this button.</p>
+            </section><div class="yt-note"><svg><use href="#i-info"/></svg><p>YouTube videos, Shorts, and playlists are supported. Only download content you have permission to use.</p></div>
           </aside>
         </div>
       </section>
-      <footer class="page-footer"><span>Senin müziğin. Senin kontrolün.</span><span>Dönüştür, indir, dinle.</span></footer>
+      <footer class="page-footer"><span>Your music. Your control.</span><span>Convert, download, listen.</span></footer>
     </main>
   </div>
 </div>
 <div id="toast-stack" class="toast-stack" role="status" aria-live="polite"></div>
-<dialog id="player-dialog"><div class="dialog-heading"><span class="eyebrow">DÖNÜŞTÜRÜLEN DOSYA</span><button class="icon-button" data-close="player-dialog" aria-label="Kapat"><svg><use href="#i-close"/></svg></button></div><h2 id="player-title">Ön dinleme</h2><p>Kaydedilen MP3 dosyasını dinliyorsun.</p><audio id="audio-player" controls preload="metadata"></audio></dialog>
-<dialog id="yt-player-dialog"><div class="dialog-heading"><span class="eyebrow">KÜTÜPHANENDEN</span><button class="icon-button" id="yt-player-close" aria-label="Önizlemeyi kapat"><svg><use href="#i-close"/></svg></button></div><h2 id="yt-player-title">Önizleme</h2><video id="yt-video-player" controls playsinline preload="metadata"></video><audio id="yt-audio-player" controls preload="metadata"></audio></dialog>
+<dialog id="player-dialog"><div class="dialog-heading"><span class="eyebrow">CONVERTED FILE</span><button class="icon-button" data-close="player-dialog" aria-label="Close"><svg><use href="#i-close"/></svg></button></div><h2 id="player-title">Preview</h2><p>You are listening to the saved MP3 file.</p><audio id="audio-player" controls preload="metadata"></audio></dialog>
+<dialog id="yt-player-dialog"><div class="dialog-heading"><span class="eyebrow">FROM YOUR LIBRARY</span><button class="icon-button" id="yt-player-close" aria-label="Close preview"><svg><use href="#i-close"/></svg></button></div><h2 id="yt-player-title">Preview</h2><video id="yt-video-player" controls playsinline preload="metadata"></video><audio id="yt-audio-player" controls preload="metadata"></audio></dialog>
 </body>
 </html>
