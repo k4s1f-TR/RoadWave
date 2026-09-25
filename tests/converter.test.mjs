@@ -5,7 +5,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import http from 'node:http';
-import { safeName, outputBase, settingsFrom, extensions } from '../lib/audio.mjs';
+import { conversionArgs, safeName, outputBase, settingsFrom, extensions } from '../lib/audio.mjs';
 import { resolveToolchain } from '../lib/platform.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -44,6 +44,13 @@ test('Portable filenames and settings validation', () => {
   assert.equal(settingsFrom({ format: 'flac', bitrate: 192 }, { migrateLegacy: true }).quality, 5);
   assert.throws(() => settingsFrom({ format: 'aac', quality: 320 }));
   for (const extension of ['.mov', '.mkv', '.mka']) assert.equal(extensions.has(extension), true);
+});
+
+test('OGG conversion can use FFmpeg native Vorbis when libvorbis is unavailable', () => {
+  const args = conversionArgs('input.wav', 'output.ogg', {}, { format: 'ogg', quality: 6, cover: false, vorbisEncoder: 'vorbis' });
+  assert.ok(args.includes('vorbis'));
+  assert.ok(args.includes('experimental'));
+  assert.equal(args.includes('libvorbis'), false);
 });
 
 test('End-to-end conversion with real FFmpeg', { timeout: 120000 }, async t => {

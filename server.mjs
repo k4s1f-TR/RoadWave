@@ -10,7 +10,7 @@ import { pipeline } from 'node:stream/promises';
 import { extensions, settingsFrom, conversionArgs, outputBase, getFormatInfo } from './lib/audio.mjs';
 import { YouTubeManager } from './lib/youtube.mjs';
 import { terminateProcessTree } from './lib/process.mjs';
-import { executableAvailable, folderPickerCommand, openerCommand, processSpawnOptions, resolveToolchain, safeUploadBasename } from './lib/platform.mjs';
+import { executableAvailable, ffmpegEncoderAvailable, folderPickerCommand, openerCommand, processSpawnOptions, resolveToolchain, safeUploadBasename } from './lib/platform.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DATA = path.resolve(process.env.SOUNDWAVE_DATA || path.join(ROOT, 'data'));
@@ -20,6 +20,7 @@ const tools = resolveToolchain(ROOT);
 const FFMPEG = tools.ffmpeg;
 const FFPROBE = tools.ffprobe;
 const ENGINE_READY = executableAvailable(FFMPEG) && executableAvailable(FFPROBE);
+const VORBIS_ENCODER = ENGINE_READY && ffmpegEncoderAvailable(FFMPEG, 'libvorbis') ? 'libvorbis' : 'vorbis';
 const PORT = Number(process.env.PORT || 47831);
 const configuredUploadLimit = Number(process.env.SOUNDWAVE_MAX_UPLOAD_BYTES || 4 * 1024 ** 3);
 const MAX_UPLOAD_BYTES = Number.isSafeInteger(configuredUploadLimit) && configuredUploadLimit > 0 ? configuredUploadLimit : 4 * 1024 ** 3;
@@ -170,7 +171,7 @@ async function convert(job) {
       if (Date.now() - last > 250) { broadcast(false); last = Date.now(); }
     };
     const encode = async withCover => {
-      await run(FFMPEG, conversionArgs(job.input, temp, job.info, job.options, withCover), job, progress);
+      await run(FFMPEG, conversionArgs(job.input, temp, job.info, { ...job.options, vorbisEncoder: VORBIS_ENCODER }, withCover), job, progress);
       if (job.status === 'canceled') throw new Error('Canceled');
       const result = JSON.parse(await run(FFPROBE, ['-v', 'error', '-show_entries', 'stream=codec_name,codec_type,sample_rate,channels', '-of', 'json', temp], job, null, 60000));
       const expectedCodec = formatInfo.id === 'wav' && job.options.quality === 24 ? 'pcm_s24le' : { mp3: 'mp3', wav: 'pcm_s16le', flac: 'flac', ogg: 'vorbis', aac: 'aac', opus: 'opus' }[formatInfo.id];

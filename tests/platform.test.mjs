@@ -4,6 +4,7 @@ import path from 'node:path';
 import {
   bundledToolPath,
   executableAvailable,
+  ffmpegEncoderAvailable,
   ffmpegInstallerCommand,
   folderPickerCommand,
   openerCommand,
@@ -42,6 +43,14 @@ test('PATH tool checks use the version flag expected by each executable', () => 
     { command: 'ffprobe', args: ['-version'] },
     { command: 'yt-dlp', args: ['--version'] }
   ]);
+});
+
+test('FFmpeg encoder detection handles bundled and native codec lists', () => {
+  const withVorbis = () => ({ status: 0, stdout: ' A..... libvorbis            libVorbis (codec vorbis)\n A..X.. vorbis               Vorbis' });
+  assert.equal(ffmpegEncoderAvailable('/tools/ffmpeg', 'libvorbis', { spawnSyncImpl: withVorbis }), true);
+  assert.equal(ffmpegEncoderAvailable('/tools/ffmpeg', 'vorbis', { spawnSyncImpl: withVorbis }), true);
+  assert.equal(ffmpegEncoderAvailable('/tools/ffmpeg', 'aac', { spawnSyncImpl: withVorbis }), false);
+  assert.equal(ffmpegEncoderAvailable('/tools/ffmpeg', 'libvorbis', { spawnSyncImpl: () => ({ status: 1, stderr: 'failed' }) }), false);
 });
 
 test('Upload names are safe across Windows and POSIX clients', () => {
