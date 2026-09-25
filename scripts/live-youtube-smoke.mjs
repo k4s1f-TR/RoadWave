@@ -3,12 +3,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promises as fs } from 'node:fs';
 import { YouTubeManager } from '../lib/youtube.mjs';
+import { resolveToolchain } from '../lib/platform.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const tools = resolveToolchain(root);
 const directory = path.join(root, 'test-artifacts', `live-youtube-${Date.now()}`);
 const url = process.argv[2] || 'https://www.youtube.com/watch?v=YE7VzlLtp-4';
 const onlyInspect = process.argv.includes('--inspect-only');
 let last = '';
-const manager = new YouTubeManager({ root, data: directory, ffmpeg: path.join(root, 'tools/ffmpeg/ffmpeg.exe'), ffprobe: path.join(root, 'tools/ffmpeg/ffprobe.exe'), onChange: () => {
+const manager = new YouTubeManager({ root, data: directory, ffmpeg: tools.ffmpeg, ffprobe: tools.ffprobe, executable: tools.ytdlp, onChange: () => {
   const status = manager.jobs.map(j => `${j.format}: ${j.status} ${j.progress}% ${j.error || ''}`).join(' | ');
   if (status !== last) { last = status; console.log(status); }
 } });

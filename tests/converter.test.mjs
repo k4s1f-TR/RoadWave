@@ -6,11 +6,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import http from 'node:http';
 import { safeName, outputBase, settingsFrom, extensions } from '../lib/audio.mjs';
+import { resolveToolchain } from '../lib/platform.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const artifacts = path.join(root, 'test-artifacts', `run-${Date.now()}`);
-const ffmpeg = path.join(root, 'tools/ffmpeg/ffmpeg.exe');
-const ffprobe = path.join(root, 'tools/ffmpeg/ffprobe.exe');
+const { ffmpeg, ffprobe } = resolveToolchain(root);
 const url = 'http://127.0.0.1:47832';
 let server, token;
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -34,7 +34,7 @@ async function finish(id) {
   throw new Error('Conversion timeout');
 }
 
-test('Windows filenames and settings validation', () => {
+test('Portable filenames and settings validation', () => {
   assert.equal(safeName('../../CON.m4a'), '_CON');
   assert.equal(safeName('C:\\music\\a:b?.m4a'), 'a_b_');
   assert.equal(outputBase('Şarkı İÇİN Özgür.m4a', true), 'Sarki ICIN Ozgur');

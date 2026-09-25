@@ -11,10 +11,10 @@ outputs/
 test-artifacts/
 scratch/
 
-# Engine binaries (downloaded via scripts/install-engine.ps1)
+# Engine binaries (downloaded or detected by the platform setup)
 tools/ffmpeg/
 
-# YouTube engine binary (downloaded via scripts/install-youtube.ps1)
+# YouTube engine binary (downloaded via scripts/install-youtube.mjs)
 tools/yt-dlp/
 
 # Engine download cache

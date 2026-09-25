@@ -7,18 +7,13 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-if not exist "tools\ffmpeg\ffmpeg.exe" goto install
-if not exist "tools\ffmpeg\ffprobe.exe" goto install
-goto launch
-:install
-  echo Running first-time setup. This step requires an internet connection...
-  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\install-engine.ps1"
-  if errorlevel 1 (
-    echo Installation failed. Check your internet connection.
-    pause
-    exit /b 1
-  )
-:launch
+echo Checking SoundWave dependencies...
+node scripts\setup.mjs
+if errorlevel 1 (
+  echo Setup failed. Review the message above and try again.
+  pause
+  exit /b 1
+)
 echo Starting SoundWave. To stop the application, use Ctrl+C in this window.
 node server.mjs --open
 if errorlevel 1 pause

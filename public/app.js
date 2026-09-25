@@ -179,7 +179,7 @@ $('#shutdown-button').onclick = safeAction(async () => {
   await api('shutdown'); intentionallyStopped = true; eventSource?.close();
   setConnected(false); $('#connection').innerHTML = '<i></i> App closed';
   $('#shutdown-button').disabled = true;
-  toast('SoundWave closed. Double click Start.cmd to reopen.');
+  toast('SoundWave closed. Run the launcher for your operating system to reopen it.');
 });
 $('#clear-done').onclick = safeAction(async () => { await api('remove', { completed: true }); toast('Completed tasks removed from list. Converted files are kept.'); });
 for (const selector of ['#nav-output', '#output-path-button']) $(selector).onclick = safeAction(() => api('open-folder'));

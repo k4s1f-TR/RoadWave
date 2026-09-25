@@ -9,13 +9,17 @@ import { spawn } from 'node:child_process';
 import { pipeline } from 'node:stream/promises';
 import { extensions, settingsFrom, conversionArgs, outputBase, getFormatInfo } from './lib/audio.mjs';
 import { YouTubeManager } from './lib/youtube.mjs';
+import { terminateProcessTree } from './lib/process.mjs';
+import { executableAvailable, folderPickerCommand, openerCommand, processSpawnOptions, resolveToolchain, safeUploadBasename } from './lib/platform.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DATA = path.resolve(process.env.SOUNDWAVE_DATA || path.join(ROOT, 'data'));
 const INPUTS = path.join(DATA, 'inputs');
 const DEFAULT_OUTPUT = path.resolve(process.env.SOUNDWAVE_OUTPUT || path.join(ROOT, 'outputs'));
-const FFMPEG = process.env.FFMPEG_PATH || path.join(ROOT, 'tools/ffmpeg/ffmpeg.exe');
-const FFPROBE = process.env.FFPROBE_PATH || path.join(ROOT, 'tools/ffmpeg/ffprobe.exe');
+const tools = resolveToolchain(ROOT);
+const FFMPEG = tools.ffmpeg;
+const FFPROBE = tools.ffprobe;
+const ENGINE_READY = executableAvailable(FFMPEG) && executableAvailable(FFPROBE);
 const PORT = Number(process.env.PORT || 47831);
 const configuredUploadLimit = Number(process.env.SOUNDWAVE_MAX_UPLOAD_BYTES || 4 * 1024 ** 3);
 const MAX_UPLOAD_BYTES = Number.isSafeInteger(configuredUploadLimit) && configuredUploadLimit > 0 ? configuredUploadLimit : 4 * 1024 ** 3;
@@ -48,7 +52,7 @@ try {
   if (error.code !== 'ENOENT') console.warn('Could not read session state; started a new session.');
 }
 
-const youtube = new YouTubeManager({ root: ROOT, data: DATA, ffmpeg: FFMPEG, ffprobe: FFPROBE, onChange: () => broadcast(false) });
+const youtube = new YouTubeManager({ root: ROOT, data: DATA, ffmpeg: FFMPEG, ffprobe: FFPROBE, executable: tools.ytdlp, onChange: () => broadcast(false) });
 
 function persist() {
   try {
@@ -61,7 +65,7 @@ function publicJob(job) {
   return rest;
 }
 function snapshot() {
-  return { jobs: jobs.map(publicJob), settings, engineReady: fs.existsSync(FFMPEG) && fs.existsSync(FFPROBE), version: '1.2.0', active: active.size, youtube: youtube.snapshot(), downloader: youtube.snapshot() };
+  return { jobs: jobs.map(publicJob), settings, engineReady: ENGINE_READY, version: '1.3.0', platform: process.platform, active: active.size, youtube: youtube.snapshot(), downloader: youtube.snapshot() };
 }
 function broadcast(save = true) {
   if (save) persist();
@@ -82,8 +86,8 @@ async function body(req) {
 }
 function run(executable, args, job, onProgress, timeoutMs = 0) {
   return new Promise((resolve, reject) => {
-    const child = spawn(executable, args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
-    const timeout = timeoutMs ? setTimeout(() => { child.kill(); reject(new Error('File information could not be read in time.')); }, timeoutMs) : null;
+    const child = spawn(executable, args, processSpawnOptions());
+    const timeout = timeoutMs ? setTimeout(() => { terminateProcessTree(child); reject(new Error('File information could not be read in time.')); }, timeoutMs) : null;
     if (job) processes.set(job.id, child);
     let stdout = '', stderr = '';
     child.stdout.on('data', chunk => {
@@ -91,12 +95,20 @@ function run(executable, args, job, onProgress, timeoutMs = 0) {
       else stdout = (stdout + chunk).slice(-4 * 1024 * 1024);
     });
     child.stderr.on('data', chunk => { stderr = (stderr + chunk).slice(-12000); });
-    child.once('error', error => { clearTimeout(timeout); reject(error); });
+    child.once('error', error => {
+      clearTimeout(timeout);
+      if (job && processes.get(job.id) === child) processes.delete(job.id);
+      reject(error);
+    });
     child.once('close', code => {
       clearTimeout(timeout);
       if (job && processes.get(job.id) === child) processes.delete(job.id);
       if (code === 0) resolve(stdout);
-      else reject(new Error(stderr || 'Failed to execute conversion engine.'));
+      else {
+        const error = new Error(stderr || 'Failed to execute conversion engine.');
+        error.exitCode = code;
+        reject(error);
+      }
     });
   });
 }
@@ -196,7 +208,7 @@ function pump() {
   }
 }
 async function upload(req, res, url) {
-  if (!fs.existsSync(FFPROBE)) return json(res, { error: 'FFprobe not found. Complete setup by running Start.cmd.' }, 503);
+  if (!ENGINE_READY) return json(res, { error: 'FFmpeg and FFprobe were not found. Run the setup command for your platform, then restart SoundWave.' }, 503);
   const declaredLength = Number(req.headers['content-length']);
   if (Number.isFinite(declaredLength) && declaredLength > MAX_UPLOAD_BYTES) {
     res.setHeader('Connection', 'close');
@@ -204,7 +216,7 @@ async function upload(req, res, url) {
     req.resume();
     return json(res, { error: `File exceeds the ${Math.ceil(MAX_UPLOAD_BYTES / 1024 ** 2)} MB upload limit.` }, 413);
   }
-  const name = path.win32.basename(url.searchParams.get('name') || '');
+  const name = safeUploadBasename(url.searchParams.get('name') || '');
   if (!extensions.has(path.extname(name).toLowerCase())) return json(res, { error: 'This file extension is not supported.' }, 400);
   const id = randomUUID();
   const input = path.join(INPUTS, `${id}${path.extname(name).toLowerCase()}`);
@@ -280,7 +292,7 @@ const server = http.createServer(async (req, res) => {
       settings = { ...settings, ...next, parallel }; broadcast(); return json(res, settings);
     }
     if (req.method === 'POST' && url.pathname === '/api/start') {
-      if (!fs.existsSync(FFMPEG)) throw new Error('FFmpeg not found. Complete installation.');
+      if (!ENGINE_READY) throw new Error('FFmpeg not found. Complete setup for your platform and restart SoundWave.');
       const value = await body(req);
       const targets = value.id ? jobs.filter(j => j.id === value.id) : jobs.filter(j => j.status === 'ready');
       for (const job of targets) if (['ready', 'error', 'canceled'].includes(job.status) && !active.has(job.id)) {
@@ -292,7 +304,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/api/cancel') {
       const { id } = await body(req);
       for (const job of jobs) if ((!id || job.id === id) && ['queued', 'converting'].includes(job.status)) {
-        job.status = 'canceled'; processes.get(job.id)?.kill();
+        job.status = 'canceled'; terminateProcessTree(processes.get(job.id));
       }
       broadcast(); return json(res, { ok: true });
     }
@@ -307,7 +319,10 @@ const server = http.createServer(async (req, res) => {
       if (pickerBusy) return json(res, { error: 'Folder selection dialog is already open.' }, 409);
       pickerBusy = true;
       try {
-        const selected = (await run('powershell.exe', ['-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass', '-File', path.join(ROOT, 'scripts/select-folder.ps1')])).trim();
+        const picker = folderPickerCommand(ROOT, { initial: settings.outputDir });
+        let selected = '';
+        try { selected = (await run(picker.command, picker.args)).trim(); }
+        catch (error) { if (!picker.cancelCodes.includes(error.exitCode)) throw error; }
         if (selected) { await fsp.access(selected, constants.W_OK); settings.outputDir = selected; broadcast(); }
         return json(res, { outputDir: settings.outputDir });
       } finally { pickerBusy = false; }
@@ -317,7 +332,8 @@ const server = http.createServer(async (req, res) => {
       const job = [...jobs, ...youtube.jobs].find(j => j.id === id);
       const dir = job?.output ? path.dirname(job.output) : settings.outputDir;
       await fsp.mkdir(dir, { recursive: true });
-      const child = spawn('explorer.exe', [dir], { windowsHide: true, detached: true, stdio: 'ignore' });
+      const opener = openerCommand(dir);
+      const child = spawn(opener.command, opener.args, { windowsHide: true, detached: true, stdio: 'ignore' });
       child.on('error', () => {}); child.unref(); return json(res, { ok: true });
     }
     const match = /^\/api\/audio\/([a-f0-9-]+)$/.exec(url.pathname);
@@ -352,8 +368,11 @@ server.requestTimeout = REQUEST_TIMEOUT_MS;
 const heartbeat = setInterval(() => { for (const res of clients) res.write(': heartbeat\n\n'); }, 20000);
 heartbeat.unref();
 function openBrowser() {
-  const child = spawn('explorer.exe', [`http://127.0.0.1:${PORT}`], { detached: true, windowsHide: true, stdio: 'ignore' });
-  child.on('error', () => {}); child.unref();
+  try {
+    const opener = openerCommand(`http://127.0.0.1:${PORT}`);
+    const child = spawn(opener.command, opener.args, { detached: true, windowsHide: true, stdio: 'ignore' });
+    child.on('error', () => {}); child.unref();
+  } catch (error) { console.warn(`${error.message} Open http://127.0.0.1:${PORT} manually.`); }
 }
 server.on('error', async error => {
   if (error.code === 'EADDRINUSE') {
@@ -380,7 +399,7 @@ server.listen(PORT, '127.0.0.1', () => {
 function shutdown() {
   stopping = true;
   youtube.shutdown();
-  for (const child of processes.values()) child.kill();
+  for (const child of processes.values()) terminateProcessTree(child);
   persist(); server.close();
   for (const client of clients) client.end();
   setTimeout(() => process.exit(0), 1000).unref();

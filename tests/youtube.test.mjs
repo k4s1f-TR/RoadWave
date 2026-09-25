@@ -5,9 +5,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { YouTubeManager, normalizeYouTubeUrl, downloadOptions, youtubeError } from '../lib/youtube.mjs';
 import { runProcess } from '../lib/process.mjs';
+import { resolveToolchain } from '../lib/platform.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const ffmpeg = path.join(root, 'tools/ffmpeg/ffmpeg.exe'), ffprobe = path.join(root, 'tools/ffmpeg/ffprobe.exe');
+const { ffmpeg, ffprobe, ytdlp } = resolveToolchain(root);
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const probe = async file => JSON.parse((await runProcess(ffprobe, ['-v', 'error', '-show_format', '-show_streams', '-of', 'json', file])).stdout);
 
@@ -44,7 +45,7 @@ test('YouTube queue and real FFmpeg MP3/MP4 preparation', { timeout: 90000 }, as
     { id: 'ddddddddddd', title: 'Faulty file', duration: 2 },
     { id: 'eeeeeeeeeee', title: 'Cancel test', duration: 2 },
   ] };
-  const executable = path.join(root, 'tools/yt-dlp/yt-dlp.exe');
+  const executable = ytdlp;
   let hold = true;
   const calls = [];
   const runner = async (command, args, options = {}) => {
@@ -66,7 +67,7 @@ test('YouTube queue and real FFmpeg MP3/MP4 preparation', { timeout: 90000 }, as
     options.onLine('RW_PROGRESS:{"downloaded_bytes":500,"total_bytes":1000,"speed":1000,"eta":1}');
     options.onLine(`RW_FILE:${JSON.stringify(file)}`); return { stdout: '', stderr: '' };
   };
-  const manager = new YouTubeManager({ root, data: dir, ffmpeg, ffprobe, executable, runner });
+  const manager = new YouTubeManager({ root, data: dir, ffmpeg, ffprobe, executable, runner, availability: () => true });
   t.after(() => manager.shutdown());
   const preview = await manager.inspect({ url: 'https://www.youtube.com/playlist?list=PL1234567890abcd' });
   const outputDir = path.join(dir, 'output');
@@ -104,7 +105,7 @@ test('YouTube queue and real FFmpeg MP3/MP4 preparation', { timeout: 90000 }, as
     hold = false; manager.retry(canceled.id); await waitDone(); assert.equal(canceled.status, 'done', canceled.error);
   });
   await t.test('Session is preserved; removing from list does not delete MP3/MP4', async () => {
-    const restored = new YouTubeManager({ root, data: dir, ffmpeg, ffprobe, executable, runner });
+    const restored = new YouTubeManager({ root, data: dir, ffmpeg, ffprobe, executable, runner, availability: () => true });
     assert.equal(restored.jobs.length, manager.jobs.length);
     const output = manager.jobs[0].output; await manager.remove({ completed: true }); assert.ok((await fs.stat(output)).size > 0);
     assert.equal(manager.jobs.length, 1); assert.equal(manager.jobs[0].status, 'error');
