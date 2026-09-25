@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import {
   bundledToolPath,
+  executableAvailable,
   ffmpegInstallerCommand,
   folderPickerCommand,
   openerCommand,
@@ -28,6 +29,19 @@ test('Tool resolution prefers explicit, bundled, then PATH executables', () => {
   assert.equal(resolveToolPath(root, 'ffmpeg', { platform: 'linux', env: {}, exists: value => value === bundled, available: () => false }), bundled);
   assert.equal(resolveToolPath(root, 'ffmpeg', { platform: 'linux', env: {}, exists: () => false, available: value => value === 'ffmpeg' }), 'ffmpeg');
   assert.equal(resolveToolPath(root, 'ffmpeg', { platform: 'linux', env: {}, exists: () => false, available: () => false }), bundled);
+});
+
+test('PATH tool checks use the version flag expected by each executable', () => {
+  const calls = [];
+  const spawnSyncImpl = (command, args) => { calls.push({ command, args }); return { status: 0 }; };
+  assert.equal(executableAvailable('ffmpeg', { spawnSyncImpl }), true);
+  assert.equal(executableAvailable('ffprobe', { spawnSyncImpl }), true);
+  assert.equal(executableAvailable('yt-dlp', { spawnSyncImpl }), true);
+  assert.deepEqual(calls, [
+    { command: 'ffmpeg', args: ['-version'] },
+    { command: 'ffprobe', args: ['-version'] },
+    { command: 'yt-dlp', args: ['--version'] }
+  ]);
 });
 
 test('Upload names are safe across Windows and POSIX clients', () => {
